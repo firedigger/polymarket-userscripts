@@ -5,10 +5,14 @@
 // @description  The script ammends profile and portfolio change with daily change in the position price from the Polymarket API
 // @author       Aleksandr Makarov
 // @license      Unlicense
+// @downloadURL  https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/polymarket%20script.js
+// @updateURL    https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/polymarket%20script.js
 // @match        https://polymarket.com/*
 // @icon         https://polymarket.com/icons/favicon-32x32.png
 // @grant        none
 // ==/UserScript==
+
+const debug = false;
 
 function waitForElement(selector) {
     return new Promise((resolve) => {
@@ -29,7 +33,7 @@ function waitForElement(selector) {
 async function getPositionsWithMarkets(user_id) {
     const positionsResponse = await fetch(`https://data-api.polymarket.com/positions?user=${user_id}`);
     const positions = await positionsResponse.json();
-    const conditionIds = positions.map(p => p.conditionId);
+    const conditionIds = positions.map(p => p.conditionId).slice(0, 100);
     const params = new URLSearchParams();
     conditionIds.forEach(id => params.append('condition_ids', id));
     const marketsResponse = await fetch(`https://gamma-api.polymarket.com/markets?${params}`);
@@ -45,18 +49,19 @@ async function getPositionsWithMarkets(user_id) {
     });
 }
 
-
 async function runScript() {
     const url = new URL(window.location.href);
     const pathSegments = url.pathname.split('/');
-    console.log("CHECKING POLYMARKET SCRIPT");
-    console.log(pathSegments);
+    if (debug)
+        console.log("CHECKING POLYMARKET SCRIPT");
     if (!pathSegments.includes('profile') && !pathSegments.includes('portfolio'))
         return;
     const isProfile = pathSegments.includes('profile');
-    console.log("WAITING FOR ELEMENT");
+    if (debug)
+        console.log("WAITING FOR ELEMENT");
     await waitForElement("[id$='-content-positions'] > div > div > div:nth-child(2) > div > div > div > div");
-    console.log("STARTING TAMPER MONKEY JOB");
+    if (debug)
+        console.log("STARTING TAMPER MONKEY JOB");
     let user_id;
     if (isProfile)
         user_id = pathSegments[pathSegments.indexOf('profile') + 1];
@@ -70,13 +75,16 @@ async function runScript() {
         return;
     const table = document.querySelector("[id$='-content-positions'] > div > div > div:nth-child(2)");
     if (!table) {
-        console.log("Table not found");
+        if (debug)
+            console.log("Table not found");
         return;
     }
-    console.log("Table found");
+    if (debug)
+        console.log("Table found");
     const positionWithMarkets = await getPositionsWithMarkets(user_id);
     const divChildren = Array.from(table.children);
-    console.log(`Processing ${divChildren.length} rows`);
+    if (debug)
+        console.log(`Processing ${divChildren.length} rows`);
     divChildren.forEach(child => {
         const col = isProfile ? child.querySelector("div > div:nth-child(3)") : child.querySelector("div > div > p").parentElement;
         const hrefDiv = child.querySelector("div[href]");
@@ -103,12 +111,14 @@ const observeDOM = (fn, e = document.documentElement, config = { attributes: 1, 
 
 (async function () {
     'use strict';
-    console.log("STARTING POLYMARKET SCRIPT");
+    if (debug)
+        console.log("STARTING POLYMARKET SCRIPT");
     await runScript();
     let url = window.location.href;
     observeDOM(() => {
         if (window.location.href !== url) {
-            console.log("URL CHANGED");
+            if (debug)
+                console.log("URL CHANGED");
             url = window.location.href;
             runScript();
         }
