@@ -99,7 +99,7 @@ async function runScript() {
             return;
         col.style.flexDirection = "column";
         col.style.alignItems = "flex-start";
-        col.innerHTML += `<p style="line-height: 1; font-weight: 500 !important; letter-spacing: 0; margin: 0; font-size: 0.75rem; color: ${change < 0 ? '#E64800' : 'green'};">${change > 0 ? '+' : ''}${change.toFixed(1)}¢</p>`;
+        col.innerHTML += `<p style="line-height: 1; font-weight: 500 !important; letter-spacing: 0; margin: 0; font-size: 0.75rem; color: ${change < 0 ? '#E64800' : '#27AE60'};">${change > 0 ? '+' : ''}${change.toFixed(1)}¢</p>`;
     });
 }
 
