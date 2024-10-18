@@ -1,22 +1,22 @@
 // ==UserScript==
-// @name         Polymarket position daily change
+// @name         Polymarket daily position price change
 // @namespace    http://tampermonkey.net/
 // @version      2024-10-16
 // @description  The script ammends profile and portfolio change with daily change in the position price from the Polymarket API
 // @author       Aleksandr Makarov
 // @license      Unlicense
-// @downloadURL  https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/polymarket%20script.js
-// @updateURL    https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/polymarket%20script.js
+// @downloadURL  https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/daily-position-price-change.js
+// @updateURL    https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/daily-position-price-change.js
 // @match        https://polymarket.com/*
 // @icon         https://polymarket.com/icons/favicon-32x32.png
 // @grant        none
 // ==/UserScript==
 
-const debug = false;
-
 function waitForElement(selector) {
+    if (document.querySelector(selector))
+        return Promise.resolve();
     return new Promise((resolve) => {
-        const observer = new MutationObserver((mutations, observerInstance) => {
+        const observer = new MutationObserver((_, observerInstance) => {
             if (document.querySelector(selector)) {
                 resolve(document.querySelector(selector));
                 observerInstance.disconnect();
@@ -29,6 +29,34 @@ function waitForElement(selector) {
         });
     });
 }
+
+const observeDOM = (fn, e = document.documentElement, config = { attributes: 1, childList: 1, subtree: 1 }) => {
+    const observer = new MutationObserver(fn);
+    observer.observe(e, config);
+    return () => observer.disconnect();
+};
+
+const observeURL = async (fn) => {
+    await fn();
+    let url = window.location.href;
+    observeDOM(() => {
+        if (window.location.href !== url) {
+            if (debug)
+                console.log("URL CHANGED");
+            url = window.location.href;
+            fn();
+        }
+    });
+};
+
+const debug = false;
+
+(async function () {
+    'use strict';
+    if (debug)
+        console.log("STARTING POLYMARKET SCRIPT");
+    await observeURL(runScript);
+})();
 
 async function getPositionsWithMarkets(user_id) {
     const positionsResponse = await fetch(`https://data-api.polymarket.com/positions?user=${user_id}`);
@@ -55,6 +83,10 @@ async function runScript() {
     if (debug)
         console.log("CHECKING POLYMARKET SCRIPT");
     if (!pathSegments.includes('profile') && !pathSegments.includes('portfolio'))
+        return;
+    if (debug)
+        console.log(url.searchParams.get('tab'));
+    if (pathSegments.includes('portfolio') && url.searchParams.get('tab') !== 'positions')
         return;
     const isProfile = pathSegments.includes('profile');
     if (debug)
@@ -94,34 +126,12 @@ async function runScript() {
         const position = positionWithMarkets.find(p => p.market.slug === href);
         if (!position || !position.market.oneDayPriceChange)
             return;
-        const change = position.market.oneDayPriceChange * 100 * (position.priceReduced ? 1 : -1);
+        const change = Math.abs(position.market.oneDayPriceChange) * 100 * (position.priceReduced ? -1 : 1);
         if (Math.abs(change) < 0.1)
             return;
         col.style.flexDirection = "column";
         col.style.alignItems = "flex-start";
         col.innerHTML += `<p style="line-height: 1; font-weight: 500 !important; letter-spacing: 0; margin: 0; font-size: 0.75rem; color: ${change < 0 ? '#E64800' : '#27AE60'};">${change > 0 ? '+' : ''}${change.toFixed(1)}¢</p>`;
+        // (${(change/position.avgPrice).toFixed(2)})%
     });
 }
-
-const observeDOM = (fn, e = document.documentElement, config = { attributes: 1, childList: 1, subtree: 1 }) => {
-    const observer = new MutationObserver(fn);
-    observer.observe(e, config);
-    return () => observer.disconnect();
-};
-
-(async function () {
-    'use strict';
-    if (debug)
-        console.log("STARTING POLYMARKET SCRIPT");
-    await runScript();
-    let url = window.location.href;
-    observeDOM(() => {
-        if (window.location.href !== url) {
-            if (debug)
-                console.log("URL CHANGED");
-            url = window.location.href;
-            runScript();
-        }
-    });
-
-})();
