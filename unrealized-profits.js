@@ -79,10 +79,14 @@ async function runScript() {
     const positions = await positionsResponse.json();
     const unrealizedProfit = positions.reduce((acc, p) => acc + p.cashPnl, 0);
     //const profit = (await (await fetch(`https://lb-api.polymarket.com/profit?window=all&limit=1&address=${user_id}`)).json()).amount;
+    const numberFormatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
     const existingUnrealizedProfitsCell = document.querySelector("#unrealized-profits");
     const unrealizedProfitString = unrealizedProfit < 0
-        ? `(-$${Math.abs(unrealizedProfit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
-        : `($${unrealizedProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+        ? `(-$${numberFormatter.format(Math.abs(unrealizedProfit))})`
+        : `($${numberFormatter.format(unrealizedProfit)})`;
     if (existingUnrealizedProfitsCell) {
         existingUnrealizedProfitsCell.innerHTML = unrealizedProfitString;
     }
@@ -92,7 +96,7 @@ async function runScript() {
     const portfolioSelector = "#__pm_layout > div > div:nth-child(3) > div:nth-child(1)";
     const portfolioMLE = positions.reduce((acc, p) => acc + (p.curPrice > 0.5 ? p.size : 0), 0);
     const existingPortfolioMLE = document.querySelector("#portfolio-mle");
-    const portfolioMLEString = `($${portfolioMLE.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+    const portfolioMLEString = `($${numberFormatter.format(portfolioMLE)})`;
     if (existingPortfolioMLE) {
         existingPortfolioMLE.innerHTML = portfolioMLEString;
     }
