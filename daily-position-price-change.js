@@ -84,9 +84,9 @@ async function runScript() {
         console.log("CHECKING POLYMARKET SCRIPT");
     if (!pathSegments.includes('profile') && !pathSegments.includes('portfolio'))
         return;
-    if (debug)
+    if (debug && pathSegments.includes('portfolio'))
         console.log(url.searchParams.get('tab'));
-    if (pathSegments.includes('portfolio') && url.searchParams.get('tab') !== 'positions')
+    if (pathSegments.includes('portfolio') && url.searchParams.get('tab') && url.searchParams.get('tab') !== 'positions')
         return;
     const isProfile = pathSegments.includes('profile');
     if (debug)
