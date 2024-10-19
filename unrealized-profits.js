@@ -103,4 +103,23 @@ async function runScript() {
     else {
         (document.querySelector(portfolioSelector)).innerHTML += `<p id="portfolio-mle" style="margin: 0">${portfolioMLEString}</p>`;
     }
+    const volumeSelector = "#__pm_layout > div > div:nth-child(3) > div:nth-child(3)";
+    const volume = positions.reduce((acc, p) => acc + p.initialValue, 0);
+    const existingVolume = document.querySelector("#volume");
+    const volumeString = `($${numberFormatter.format(volume)})`;
+    if (existingVolume) {
+        existingVolume.innerHTML = volumeString;
+    }
+    else {
+        (document.querySelector(volumeSelector)).innerHTML += `<p id="volume" style="margin: 0">${volumeString}</p>`;
+    }
+    const marketsSelector = "#__pm_layout > div > div:nth-child(3) > div:nth-child(4)";
+    const markets = positions.length;
+    const existingMarkets = document.querySelector("#markets");
+    if (existingMarkets) {
+        existingMarkets.innerHTML = markets;
+    }
+    else {
+        (document.querySelector(marketsSelector)).innerHTML += `<p id="markets" style="margin: 0">(${markets})</p>`;
+    }
 }

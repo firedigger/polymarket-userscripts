@@ -21,5 +21,7 @@ To address this, the script extracts the unrealized profit from current position
 In the portfolio, each position shows a "To Win" value—what you would earn if your prediction is correct. However, this value isn't accumulated for all bets, and it's unrealistic to expect every bet to win. The portfolio value represents the Estimated Value (EV) of active bets, calculated based on market probabilities.  
 The script also provides an easy way to estimate the potential monetary outcome of your positions by assuming bets with over 50% probability will win and those with less than 50% will lose. It accumulates these values to provide what is known as the Maximum Likelihood Estimate (MLE). While the actual outcome might differ, statistically, this represents the most probable result once all bets are settled. This MLE figure will be displayed below the portfolio value on the profile page and can be especially useful when balancing a mix of high- and low-chance bets.
 ![PrincessCaro profile](https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/screen3.JPG)
+The value under volume shows the initial investment total on the active positions. In general Polymarket's volume value has a formula aimed at exaggerating numbers and probably doesn't show what you would expect.  
+The value under markets shows the number of active positions, which is also arguably more practical than the number of markets traded within the profile's lifetime.
 
 [ko-fi](https://ko-fi.com/firedigger)
