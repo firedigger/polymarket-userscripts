@@ -65,11 +65,12 @@ function calculatePartOfTheYear(deadline) {
 }
 
 async function runScript() {
-    //TODO: do I need wait for element?
     const url = new URL(window.location.href);
     const pathSegments = url.pathname.split('/');
     if (!pathSegments.includes("event"))
         return;
+    const selector = "#__pm_layout > div > div > div > div > div > div > div > div";
+    await waitForElement(selector);
     const slug = pathSegments[pathSegments.length - 1];
     if (debug)
         console.log("SLUG: ", slug);
@@ -82,15 +83,14 @@ async function runScript() {
     if (debug)
         console.log(event);
     const markets = event.markets;
-    if (markets.length !== 1) //currently only supporting single market events, expand to market rows
-    {
+    if (!markets.length || markets.length > 2) {
         if (debug)
             console.log("Multiple markets not supported yet");
         return;
     }
     const market = markets[0];
     const annualizedProfit = (1 / Math.max(market.bestAsk, 1 - market.bestBid) - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
-    const elem = document.querySelector("#__pm_layout > div > div > div > div > div > div > div > div");
+    const elem = document.querySelector(selector);
     if (!elem) {
         if (debug)
             console.log("Element not found");
