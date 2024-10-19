@@ -2,7 +2,7 @@
 // @name         Polymarket market annual return
 // @namespace    http://tampermonkey.net/
 // @version      2024-10-18
-// @description  TODO
+// @description  The script calculates the annual return rate for the probable outcome of the market and displays it on the page
 // @author       Aleksandr Makarov
 // @license      Unlicense
 // @downloadURL  https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/market-annual-return.js

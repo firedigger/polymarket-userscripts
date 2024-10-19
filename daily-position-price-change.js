@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Polymarket daily position price change
 // @namespace    http://tampermonkey.net/
-// @version      2024-10-16
+// @version      2024-10-18
 // @description  The script ammends profile and portfolio change with daily change in the position price from the Polymarket API
 // @author       Aleksandr Makarov
 // @license      Unlicense

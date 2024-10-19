@@ -49,7 +49,7 @@ const observeURL = async (fn) => {
     });
 };
 
-const debug = true;
+const debug = false;
 
 (async function () {
     'use strict';

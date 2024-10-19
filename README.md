@@ -1,6 +1,6 @@
 # polymarket-userscripts
-After actively using polymarket for some time I decide to introduce a couple of UI features I would like the platform to have. I have implemented them as userscripts integrated via [Tampermonkey](https://www.tampermonkey.net). Feel free to explore if they could be interesting for you. The open source nature of the code is a guarantee of security of your account. Feedback and ideas are appreciated. Contact me at Discord `firedigger`
-The script can be added to [Tampermonkey](https://www.tampermonkey.net) extension for auto-loading, but you can try the script manually without installing anything just by going to the polymarket website and pasting the desired JS file contents into the console window.
+After actively using polymarket for some time I decide to introduce a couple of UI features I would like the platform to have. I have implemented them as userscripts integrated via [Tampermonkey](https://www.tampermonkey.net). Feel free to explore if they could be interesting for you. The open source nature of the code is a guarantee of security of your account. Feedback and ideas are appreciated. Contact me at Discord `firedigger`  
+The script can be added to [Tampermonkey](https://www.tampermonkey.net) extension for auto-loading, but you can try the script manually without installing anything just by going to the polymarket website and pasting the desired JS file contents into the console window.  
 After installing click "Create new script", paste the JS file content into the window and save. The script will activate on the corresponding pages immediately after a reload and will proceed to be applied automatically until toggled off.
 
 ## Daily position price change
