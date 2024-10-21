@@ -5,8 +5,6 @@
 // @description  The script ammends profile profit with unrealized profits figure and profile portfolio with portfolio MLE value
 // @author       Aleksandr Makarov
 // @license      Unlicense
-// @downloadURL  https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/unrealized-profits.js
-// @updateURL    https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/unrealized-profits.js
 // @match        https://polymarket.com/*
 // @icon         https://polymarket.com/icons/favicon-32x32.png
 // @grant        none
@@ -78,7 +76,6 @@ async function runScript() {
     const positionsResponse = await fetch(`https://data-api.polymarket.com/positions?user=${user_id}`);
     const positions = await positionsResponse.json();
     const unrealizedProfit = positions.reduce((acc, p) => acc + p.cashPnl, 0);
-    //const profit = (await (await fetch(`https://lb-api.polymarket.com/profit?window=all&limit=1&address=${user_id}`)).json()).amount;
     const numberFormatter = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
