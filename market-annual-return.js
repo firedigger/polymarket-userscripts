@@ -59,7 +59,7 @@ const debug = false;
 })();
 
 function calculatePartOfTheYear(deadline) {
-    return (deadline.getTime() - Date.now()) / (Date.UTC(deadline.getUTCFullYear() + 1, 0, 1) - Date.UTC(deadline.getUTCFullYear(), 0, 1));
+    return Math.max(deadline.getTime() - Date.now(), 24 * 60 * 60 * 1000) / (Date.UTC(deadline.getUTCFullYear() + 1, 0, 1) - Date.UTC(deadline.getUTCFullYear(), 0, 1));
 }
 
 async function runScript() {
@@ -67,7 +67,7 @@ async function runScript() {
     const pathSegments = url.pathname.split('/');
     if (!pathSegments.includes("event"))
         return;
-    const selector = "#__pm_layout > div > div > div > div > div > div > div > div";
+    const selector = "#__pm_layout > div > div > div > div > div:nth-child(2) > div";
     await waitForElement(selector);
     const slug = pathSegments[2];
     if (debug)
@@ -78,18 +78,31 @@ async function runScript() {
             console.log("Event not found");
         return;
     }
+    const markets = event.markets.filter(m => !m.closed && m.bestAsk > 0.01);
     if (debug)
-        console.log(event);
-    const markets = event.markets.filter(m => !m.closed);
+        console.log('markets:', markets);
     if (!markets.length)
         return;
-    //TODO: per row when there are more than 2 markets
-    const annualizedProfit = (1 / Math.min(...markets.map(m => Math.max(m.bestAsk, 1 - m.bestBid))) - 1) / calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate))))) * 100;
-    const elem = document.querySelector(selector);
-    if (!elem) {
-        if (debug)
-            console.log("Element not found");
-        return;
+    if (markets.length > 2) {
+        Array.from(document.querySelectorAll("div[data-state] > button[id]")).forEach(row => {
+            const cell = row.querySelector("div > div > div");
+            const groupItemTitle = cell.querySelector("p").innerHTML;
+            const market = markets.find(m => m.groupItemTitle == groupItemTitle);
+            if (!market)
+                return;
+            const annualizedProfit = (1 / Math.max(market.bestAsk, 1 - market.bestBid) - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
+            const elem = cell.lastChild;
+            elem.innerHTML += `<p>${Math.floor(annualizedProfit)}% ARR</p>`;
+        });
     }
-    elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${Math.floor(annualizedProfit)}% ARR</p>`;
+    else {
+        const annualizedProfit = (1 / Math.min(...markets.map(m => Math.max(m.bestAsk, 1 - m.bestBid))) - 1) / calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate))))) * 100;
+        const elem = document.querySelector(selector);
+        if (!elem) {
+            if (debug)
+                console.log("Element not found");
+            return;
+        }
+        elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${Math.floor(annualizedProfit)}% ARR</p>`;
+    }
 }
