@@ -92,7 +92,7 @@ async function runScript() {
                 return;
             const annualizedProfit = (1 / Math.max(market.bestAsk, 1 - market.bestBid) - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
             const elem = cell.lastChild;
-            elem.innerHTML += `<p>${Math.floor(annualizedProfit)}% ARR</p>`;
+            elem.innerHTML += `<p>${Math.floor(annualizedProfit)}% APR</p>`;
         });
     }
     else {
@@ -103,6 +103,6 @@ async function runScript() {
                 console.log("Element not found");
             return;
         }
-        elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${Math.floor(annualizedProfit)}% ARR</p>`;
+        elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${Math.floor(annualizedProfit)}% APR</p>`;
     }
 }

@@ -56,22 +56,31 @@ const debug = false;
     await observeURL(runScript);
 })();
 
+async function getMarketsForConditionIds(condition_ids) {
+    let fullMarkets = [];
+    const batch = 20;
+    for (let i = 0; i < condition_ids.length; i += batch) {
+        const params = new URLSearchParams(condition_ids.slice(i, i + 20).map((id) => ['condition_ids', id]));
+        const marketsResponse = await fetch(`https://gamma-api.polymarket.com/markets?${params}`);
+        const markets = await marketsResponse.json();
+        fullMarkets.push(...markets);
+    }
+    return fullMarkets;
+}
+
 async function getPositionsWithMarkets(user_id) {
     const positionsResponse = await fetch(`https://data-api.polymarket.com/positions?user=${user_id}`);
     const positions = await positionsResponse.json();
-    const conditionIds = positions.map(p => p.conditionId).slice(0, 100);
-    const params = new URLSearchParams();
-    conditionIds.forEach(id => params.append('condition_ids', id));
-    const marketsResponse = await fetch(`https://gamma-api.polymarket.com/markets?${params}`);
-    const markets = await marketsResponse.json();
+    const conditionIds = Array.from(new Set(positions
+        .sort((a, b) => b.currentValue - a.currentValue)
+        .slice(0, 100)
+        .map(p => p.conditionId)
+    ));
+    const markets = await getMarketsForConditionIds(conditionIds);
     return positions.map(p => {
-        const market = markets.find(m => m.conditionId === p.conditionId);
-        return { ...p, market };
+        return { ...p, market: markets.find(m => m.conditionId == p.conditionId) };
     }).filter(p => p.market).map(p => {
-        const firstOutcome = JSON.parse(p.market.outcomes)[0];
-        const newPrice = p.outcome === firstOutcome ? p.market.bestAsk : 1 - p.market.bestBid;
-        const priceReduced = p.market.oneDayPriceChange && ((p.outcome === firstOutcome) === (p.market.oneDayPriceChange < 0));
-        return { ...p, newPrice, priceReduced };
+        return { ...p, bet: JSON.parse(p.market.outcomes)[0] === p.outcome };
     });
 }
 
