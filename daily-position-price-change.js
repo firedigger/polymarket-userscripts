@@ -133,7 +133,7 @@ async function runScript() {
         const position = positionWithMarkets.find(p => p.market.slug === href);
         if (!position || !position.market.oneDayPriceChange)
             return;
-        const change = Math.abs(position.market.oneDayPriceChange) * 100 * (position.priceReduced ? -1 : 1);
+        const change = position.market.oneDayPriceChange * 100 * (position.bet ? 1 : -1);
         if (Math.abs(change) < 0.1)
             return;
         col.style.flexDirection = "column";
