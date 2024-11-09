@@ -49,6 +49,7 @@ const observeURL = async (fn) => {
     });
 };
 
+const arr_threshold = 0.74;
 const debug = false;
 
 (async function () {
@@ -84,16 +85,67 @@ async function runScript() {
     if (!markets.length)
         return;
     if (markets.length > 2) {
-        Array.from(document.querySelectorAll("div[data-state] > button[id]")).forEach(row => {
-            const cell = row.querySelector("div > div > div");
-            const groupItemTitle = cell.querySelector("p").innerHTML;
-            const market = markets.find(m => m.groupItemTitle == groupItemTitle);
-            if (!market)
-                return;
-            const annualizedProfit = (1 / Math.max(market.bestAsk, 1 - market.bestBid) - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
-            const elem = cell.lastChild;
-            elem.innerHTML += `<p>${Math.floor(annualizedProfit)}% APR</p>`;
-        });
+        const selector = document.querySelectorAll("div[data-state] > button[id]");
+        if (markets.some(m => m.negRisk)) {
+            if (debug)
+                console.log("Negative risk found");
+            let counter = 0;
+            //TODO: go from most probable to 2 directions?
+            const negThreshold = 0.73;
+            const touched = new Set();
+            Array.from(selector).forEach(row => {
+                const cell = row.querySelector("div > div > div");
+                const groupItemTitle = cell.querySelector("p").innerHTML;
+                const market = markets.find(m => m.groupItemTitle == groupItemTitle);
+                if (!market)
+                    return;
+                counter += market.bestAsk;
+                if (counter < negThreshold || counter >= 1)
+                    return;
+                touched.add(row);
+                const annualizedProfit = (1 / counter - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
+                const elem = cell.lastChild;
+                elem.innerHTML += `<p>${counter.toPrecision(3)}(${Math.floor(annualizedProfit)}% APR)</p>`;
+            });
+            counter = 0;
+            Array.from(selector).reverse().forEach(row => {
+                const cell = row.querySelector("div > div > div");
+                const groupItemTitle = cell.querySelector("p").innerHTML;
+                const market = markets.find(m => m.groupItemTitle == groupItemTitle);
+                if (!market)
+                    return;
+                counter += market.bestBid;
+                if (counter < negThreshold || counter >= 1)
+                    return;
+                touched.add(row);
+                const annualizedProfit = (1 / counter - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
+                const elem = cell.lastChild;
+                elem.innerHTML += `<p style="color: #E64800;">${counter.toPrecision(3)}(${Math.floor(annualizedProfit)}% APR)</p>`;
+            });
+            Array.from(selector).forEach(row => {
+                const cell = row.querySelector("div > div > div");
+                const groupItemTitle = cell.querySelector("p").innerHTML;
+                const market = markets.find(m => m.groupItemTitle == groupItemTitle);
+                if (!market)
+                    return;
+                if (touched.has(row))
+                    return;
+                const annualizedProfit = (1 / Math.max(market.bestAsk, 1 - market.bestBid) - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
+                const elem = cell.lastChild;
+                elem.innerHTML += `<p>${Math.floor(annualizedProfit)}% APR</p>`;
+            });
+        }
+        else
+            Array.from(selector).forEach(row => {
+                const cell = row.querySelector("div > div > div");
+                const groupItemTitle = cell.querySelector("p").innerHTML;
+                const market = markets.find(m => m.groupItemTitle == groupItemTitle);
+                if (!market)
+                    return;
+                const annualizedProfit = (1 / Math.max(market.bestAsk, 1 - market.bestBid) - 1) / calculatePartOfTheYear(new Date(market.endDate)) * 100;
+                const elem = cell.lastChild;
+                elem.innerHTML += `<p>${Math.floor(annualizedProfit)}% APR</p>`;
+            });
     }
     else {
         const annualizedProfit = (1 / Math.min(...markets.map(m => Math.max(m.bestAsk, 1 - m.bestBid))) - 1) / calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate))))) * 100;
@@ -103,6 +155,13 @@ async function runScript() {
                 console.log("Element not found");
             return;
         }
-        elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${Math.floor(annualizedProfit)}% APR</p>`;
+        let text = Math.floor(annualizedProfit) + "% APR";
+        if (annualizedProfit < arr_threshold * 100) {
+            const partOftheYear = calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate)))));
+            const minAsk = 1 / (1 + arr_threshold * partOftheYear);
+            console.log("minAsk", minAsk);
+            text += ` (get ${(minAsk * 100).toFixed(1)}¢)`;
+        }
+        elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${text}</p>`;
     }
 }
