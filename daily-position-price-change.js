@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Polymarket daily position price change
 // @namespace    http://tampermonkey.net/
-// @version      2024-10-18
+// @version      2024-11-18
 // @description  The script ammends profile and portfolio change with daily change in the position price from the Polymarket API
 // @author       Aleksandr Makarov
 // @license      Unlicense
@@ -129,7 +129,7 @@ async function runScript() {
         const hrefDiv = child.querySelector("div[href]");
         if (!hrefDiv || !hrefDiv.attributes || !hrefDiv.attributes["href"])
             return;
-        const href = hrefDiv.attributes["href"].value.replace(/^\/market\//, '');
+        const href = hrefDiv.attributes["href"].value.split('/').pop();
         const position = positionWithMarkets.find(p => p.market.slug === href);
         if (!position || !position.market.oneDayPriceChange)
             return;
