@@ -75,6 +75,8 @@ async function getUserPositions(conditions) {
         body: JSON.stringify({ query })
     });
     const data = await response.json();
+    if (debug)
+        console.log("GraphQL response: ", data);
     return data.data.userBalances.map(b => ({ user: b.user, condition: b.asset.condition.id, balance: Math.floor(b.balance / 1000000), outcomeIndex: b.asset.outcomeIndex })).filter(b => b.balance > 0);
 }
 
@@ -89,10 +91,6 @@ const bettors = [{ name: "Donkov", id: "0xbc54e69667ceb6ccec538e5a0ba1927fc1fe68
         console.log("STARTING POLYMARKET SCRIPT");
     await observeURL(runScript);
 })();
-
-function calculatePartOfTheYear(deadline) {
-    return Math.max(deadline.getTime() - Date.now(), 24 * 60 * 60 * 1000) / (Date.UTC(deadline.getUTCFullYear() + 1, 0, 1) - Date.UTC(deadline.getUTCFullYear(), 0, 1));
-}
 
 function createTable(data, elem, condition_column) {
     const tableWrapper = document.createElement("div");
@@ -152,7 +150,7 @@ function createTable(data, elem, condition_column) {
 
         const outcomeCell = document.createElement("td");
         outcomeCell.classList.add("c-hzTKhM", "c-hzTKhM-ieIMQng-css");
-        outcomeCell.textContent = item.outcomeIndex === 0 ? "No" : "Yes";
+        outcomeCell.textContent = item.outcome;
         row.appendChild(outcomeCell);
 
         tbody.appendChild(row);
@@ -179,7 +177,7 @@ function createTable(data, elem, condition_column) {
         "c-iFnLRI",
         "c-iFnLRI-eHbKxH-variant-primary"
     );
-    headerTitle.textContent = "Bettor's positions";
+    headerTitle.textContent = "Bettors' positions";
 
     headerInner.appendChild(headerTitle);
     headerSection.appendChild(headerInner);
@@ -215,7 +213,7 @@ async function runScript() {
         return;
     positions.forEach(p => {
         const market = markets.find(m => m.conditionId === p.condition);
-        p.outcomeIndex = JSON.parse(market.outcomes)[p.outcomeIndex - 1].name;
+        p.outcome = JSON.parse(market.outcomes)[+p.outcomeIndex];
         p.condition = market.groupItemTitle;
         p.user = bettors.find(b => b.id.toLowerCase() === p.user.toLowerCase())?.name;
     });
