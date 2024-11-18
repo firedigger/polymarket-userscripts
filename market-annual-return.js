@@ -90,8 +90,9 @@ async function runScript() {
             if (debug)
                 console.log("Negative risk found");
             let counter = 0;
-            //TODO: go from most probable to 2 directions?
-            const negThreshold = 0.73;
+            //TODO: add button to change the mode?
+            //go from most probable to 2 directions?
+            const negThreshold = 1; //disable neg risk for now
             const touched = new Set();
             Array.from(selector).forEach(row => {
                 const cell = row.querySelector("div > div > div");
