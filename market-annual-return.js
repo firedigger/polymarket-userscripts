@@ -68,7 +68,7 @@ async function runScript() {
     const pathSegments = url.pathname.split('/');
     if (!pathSegments.includes("event"))
         return;
-    const selector = "#__pm_layout > div > div > div > div > div:nth-child(2) > div";
+    const selector = "#event-layout-with-side-nav > div > div > div > div > div:nth-child(2) > div";
     await waitForElement(selector);
     const slug = pathSegments[2];
     if (debug)
@@ -160,7 +160,6 @@ async function runScript() {
         if (annualizedProfit < arr_threshold * 100) {
             const partOftheYear = calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate)))));
             const minAsk = 1 / (1 + arr_threshold * partOftheYear);
-            console.log("minAsk", minAsk);
             text += ` (get ${(minAsk * 100).toFixed(1)}¢)`;
         }
         elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${text}</p>`;
