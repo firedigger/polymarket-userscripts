@@ -157,11 +157,10 @@ async function runScript() {
             return;
         }
         let text = Math.floor(annualizedProfit) + "% APR";
-        if (annualizedProfit < arr_threshold * 100) {
-            const partOftheYear = calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate)))));
-            const minAsk = 1 / (1 + arr_threshold * partOftheYear);
-            text += ` (get ${(minAsk * 100).toFixed(1)}¢)`;
-        }
+        const partOftheYear = calculatePartOfTheYear(new Date(Math.min(...markets.map(m => new Date(m.endDate)))));
+        const minAsk = 1 / (1 + arr_threshold * partOftheYear);
+        const verb = annualizedProfit < arr_threshold * 100 ? "get" : "sell at";
+        text += ` (${verb} ${(minAsk * 100).toFixed(1)}¢)`;
         elem.innerHTML += `<p style="color: #858D92; font-size: 0.875rem; line-height: 1.2; font-weight: 400 !important; margin: 0">${text}</p>`;
     }
 }
