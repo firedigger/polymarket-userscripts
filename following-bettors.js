@@ -49,24 +49,7 @@ const observeURL = async (fn) => {
     });
 };
 
-async function getUserPositions(conditions) {
-    const url = "https://api.goldsky.com/api/public/project_cl6mb8i9h0003e201j6li0diw/subgraphs/positions-subgraph/0.0.7/gn";
-    const query = `
-  query {
-  userBalances(
-    where: {user_in: ${JSON.stringify(bettors.map(b => b.id))}, asset_: {condition_in: ${JSON.stringify(conditions)}}}
-  ) {
-    user,
-    asset{
-        condition{
-            id
-        },
-        outcomeIndex
-    },
-    balance
-  }
-}
-`;
+async function graphQLRequest(url, query) {
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -74,10 +57,65 @@ async function getUserPositions(conditions) {
         },
         body: JSON.stringify({ query })
     });
-    const data = await response.json();
+    return await response.json();
+}
+
+
+async function getUserPositions(markets) {
+    const conditions = markets.map(m => m.conditionId);
+    const marketPositions = await graphQLRequest("https://api.goldsky.com/api/public/project_cl6mb8i9h0003e201j6li0diw/subgraphs/polymarket-orderbook-resync/prod/gn", `
+    query {
+    marketPositions(
+      where: {user_in: ${JSON.stringify(bettors.map(b => b.id))}, market_: {condition_in: ${JSON.stringify(conditions)}}}
+    ) {
+        user{
+            id
+        },
+        market {
+        condition {
+            id
+            },
+            priceOrderbook
+        },
+        quantityBought,
+        valueBought,
+        valueSold,
+        netQuantity
+    }
+  }
+  `);
+    const userBalances = await graphQLRequest("https://api.goldsky.com/api/public/project_cl6mb8i9h0003e201j6li0diw/subgraphs/positions-subgraph/0.0.7/gn", `query {
+    userBalances(
+        where: {user_in: ${JSON.stringify(bettors.map(b => b.id))}, asset_: {condition_in: ${JSON.stringify(conditions)}}}
+    ) {
+        user,
+        asset{
+            condition{
+                id
+            },
+            outcomeIndex
+        },
+        balance
+    }
+    }
+    `);
     if (debug)
-        console.log("GraphQL response: ", data);
-    return data.data.userBalances.map(b => ({ user: b.user, condition: b.asset.condition.id, balance: Math.floor(b.balance / 1000000), outcomeIndex: b.asset.outcomeIndex })).filter(b => b.balance > 0);
+        console.log("GraphQL response: ", marketPositions, userBalances);
+    const marketPositionsFlat = marketPositions.data.marketPositions.map(p => ({ user: p.user.id, condition: p.market.condition.id, amount: Math.floor(p.valueBought / 1000000), quantity: Math.floor(p.quantityBought / 1000000), netQuantity: Math.floor(p.netQuantity / 1000000), price: p.market.priceOrderbook })).filter(p => p.netQuantity > 0);
+    const userBalancesFlat = userBalances.data.userBalances.map(b => ({ user: b.user, condition: b.asset.condition.id, outcomeIndex: b.asset.outcomeIndex, balance: Math.floor(b.balance / 1000000) }));
+    return marketPositionsFlat.map(mp => {
+        const market = markets.find(m => m.conditionId === mp.condition);
+        const outcomes = JSON.parse(market.outcomePrices);
+        mp.avgPrice = mp.amount / mp.quantity;
+        mp.outcomeIndex = Math.abs(outcomes[0] - mp.price) <= Math.abs(outcomes[1] - mp.price) ? 0 : 1;
+        const balance = userBalancesFlat.find(b => b.user === mp.user && b.condition === mp.condition && b.outcomeIndex == mp.outcomeIndex);
+        if (balance && Math.abs(balance.balance - mp.netQuantity) > 5) {
+            mp.netQuantity = balance.balance;
+            mp.approximate = true;
+        }
+        mp.quantity = mp.netQuantity;
+        return mp;
+    }).filter(p => p.quantity > 0);
 }
 
 const arr_threshold = 0.74;
@@ -110,7 +148,7 @@ function createTable(data, elem, multi_market) {
     if (multi_market) {
         headers.push("Condition");
     }
-    headers.push("Balance", "Outcome");
+    headers.push("Shares", "Avg", "Outcome");
     headers.forEach((headerText, i) => {
         const th = document.createElement("th");
         th.style.cssText = `
@@ -177,8 +215,16 @@ function createTable(data, elem, multi_market) {
         const balanceCell = document.createElement("td");
         balanceCell.style.cssText = cellCSS;
         balanceCell.style.width = "150px";
-        balanceCell.textContent = item.balance;
+        balanceCell.textContent = item.quantity;
         row.appendChild(balanceCell);
+
+        const avgCell = document.createElement("td");
+        avgCell.style.cssText = cellCSS;
+        avgCell.style.width = "150px";
+        avgCell.textContent = Math.round(item.avgPrice * 100);
+        if (item.approximate)
+            avgCell.textContent += "*";
+        row.appendChild(avgCell);
 
         const outcomeCell = document.createElement("td");
         outcomeCell.style.cssText = cellCSS;
@@ -188,8 +234,8 @@ function createTable(data, elem, multi_market) {
             padding: 0.25rem;
             border-radius: 4px;
             font-weight: 500;`;
-        outcome.style.color = +item.outcomeIndex === 0 ? "#27AE60" : "#E64800";
-        outcome.style.backgroundColor = +item.outcomeIndex === 0 ? "#27AE601A" : "#EB57571A";
+        outcome.style.color = item.outcomeIndex === 0 ? "#27AE60" : "#E64800";
+        outcome.style.backgroundColor = item.outcomeIndex === 0 ? "#27AE601A" : "#EB57571A";
         outcome.style.width = "fit-content";
         outcome.textContent = item.outcome;
         outcomeCell.appendChild(outcome);
@@ -257,22 +303,21 @@ async function runScript() {
     if (!markets.length)
         return;
     await waitForElement("#__pm_layout > div");
-    const positions = await getUserPositions(markets.map(m => m.conditionId));
+    const positions = await getUserPositions(markets);
     if (!positions.length)
         return;
+    if (debug)
+        console.log('positions:', positions);
     positions.forEach(p => {
         const market = markets.find(m => m.conditionId === p.condition);
         p.outcome = JSON.parse(market.outcomes)[+p.outcomeIndex];
         p.condition = market.groupItemTitle;
         p.username = bettors.find(b => b.id.toLowerCase() === p.user.toLowerCase())?.name;
     });
-    if (debug)
-        console.log('positions:', positions);
+    positions.sort((a, b) => b.quantity - a.quantity);
     const insertAfter = markets.length > 1 ? document.querySelector("#__pm_layout > div > div > div > div:nth-child(3)") : document.querySelector("span.c-hCeiGL").parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.previousSibling;
     if (debug)
         console.log("INSERT AFTER: ", insertAfter);
     createTable(positions, insertAfter, markets.length > 1);
-    //TODO: Check if can retrieve the avg price
-    //Improve styling on multi-market pages
-    //Indicate if you are in a challenge with a bettor, add self const
+    //TODO: Fix positioning on multi-market pages
 }

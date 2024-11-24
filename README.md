@@ -34,7 +34,8 @@ The script also provides an easy way to estimate the potential monetary outcome 
 The value under volume shows the initial investment total on the active positions. In general Polymarket's volume value has a formula aimed at exaggerating numbers and probably doesn't show what you would expect.  
 The value under markets shows the number of active positions, which is also arguably more practical than the number of markets traded within the profile's lifetime.
 ## Following bettors' positions on the market page
-From Polymarket API it is possible to query any user's position on any market. This way, when assessing whether you have a good bet guess for a given market, you could check if your following bettors have made their choice, giving your relevant insight. Normally you can see top holders of each side on the market page with some familiar names, but the script provider a faster view onto selected individuals, especially on multi-option markets and in the future when there will be more unfamiliar players. The script links via ids so is resistant to profile renames.
+From Polymarket API it is possible to query any user's position on any market. This way, when assessing whether you have a good bet guess for a given market, you could check if your following bettors have made their choice, giving your relevant insight. Normally you can see top holders of each side on the market page with some familiar names, but the script provider a faster view onto selected individuals, especially on multi-option markets and in the future when there will be more unfamiliar players. The script links via ids so is resistant to profile renames.  
+The styles current copy the dark theme so will only properly render on that mode.
 ![Israel strike on Iranian nuclear facility in 2024 market](https://raw.githubusercontent.com/firedigger/polymarket-userscripts/refs/heads/main/screen6.JPG)
 
 [ko-fi](https://ko-fi.com/firedigger)
