@@ -68,7 +68,7 @@ async function runScript() {
     const pathSegments = url.pathname.split('/');
     if (!pathSegments.includes("event"))
         return;
-    const selector = "#event-layout-with-side-nav > div > div > div > div > div:nth-child(2) > div";
+    const selector = "#event-detail-container > div > div > div:nth-child(2) > div";
     await waitForElement(selector);
     const slug = pathSegments[2];
     if (debug)
